@@ -1,0 +1,6 @@
+CONTACT_NOT_FOUND = "Contact not found"
+SERVER_CONFIG_ERROR = "Database is not configured correctly"
+SERVER_CONNECTION_ERROR = "Error connecting to the database"
+USER_EMAIL_ALREADY_EXISTS = "User with such EMAIL already exists"
+USER_NAME_ALREADY_EXISTS = "User with such USERNAME already exists"
+UNAUTHORIZED = "Wrong login or password"
