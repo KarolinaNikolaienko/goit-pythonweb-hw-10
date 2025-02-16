@@ -11,8 +11,13 @@ WORKDIR $APP_HOME
 #Встановимо poetry
 RUN pip install -r requirements.txt
 
+RUN alembic init -t async migrations
+RUN alembic revision --autogenerate -m 'Init'
+RUN alembic upgrade head
+
 # Скопіюємо інші файли в робочу директорію контейнера
 COPY . .
+
 
 # Позначимо порт, де працює застосунок всередині контейнера
 EXPOSE 8000
