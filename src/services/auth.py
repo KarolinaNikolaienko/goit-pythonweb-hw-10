@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, UTC
+from src.conf import messages
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
 from src.database.db import get_db
-from src.conf.config import config
+from src.conf.config import settings
 from src.services.users import UserService
 
 
@@ -31,12 +32,34 @@ async def create_access_token(data: dict, expires_delta: Optional[int] = None):
     if expires_delta:
         expire = datetime.now(UTC) + timedelta(seconds=expires_delta)
     else:
-        expire = datetime.now(UTC) + timedelta(seconds=config.JWT_EXPIRATION_SECONDS)
+        expire = datetime.now(UTC) + timedelta(seconds=settings.JWT_EXPIRATION_SECONDS)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode, config.JWT_SECRET, algorithm=config.JWT_ALGORITHM
+        to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
     )
     return encoded_jwt
+
+
+def create_email_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(UTC) + timedelta(days=7)
+    to_encode.update({"iat": datetime.now(UTC), "exp": expire})
+    token = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    return token
+
+
+async def get_email_from_token(token: str):
+    try:
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
+        email = payload["sub"]
+        return email
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=messages.WRONG_TOKEN,
+        )
 
 
 async def get_current_user(
@@ -51,7 +74,7 @@ async def get_current_user(
     try:
         # Decode JWT
         payload = jwt.decode(
-            token, config.JWT_SECRET, algorithms=[config.JWT_ALGORITHM]
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
         )
         username = payload["sub"]
         if username is None:
